@@ -16,6 +16,7 @@ PILow
 
 ## Exemples:
 ### Original:
-[Original](exemple/python.bmp)
-### Final, encodé avec les paramètres par défaut et contenant le début de ce Readme:
-[Final](exemple/pythonfinal.bmp)
+![Original](exemple/python.bmp)
+### Final:
+encodé avec les paramètres par défaut et contenant le début de ce Readme:
+![Final](exemple/pythonfinal.bmp)
