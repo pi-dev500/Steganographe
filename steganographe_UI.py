@@ -25,6 +25,7 @@ class App_Settings():# paramètres de l'app
     ydir=0
     rgb=(1,1,1)
     charbits=8
+    creturn="CR"
     shown=False
     def show(self): # fenètre qui s'affiche uniquement quand souhaité
         #-initialisation de la fenètre
@@ -55,6 +56,12 @@ class App_Settings():# paramètres de l'app
         self.entry_charbits.bind("<Return>",self.update)
         self.charbits_frame.label=Label(self.charbits_frame,text="bits par caractères")
         
+        #-Entrée du retour chariot personalisé---------------------------------
+        self.creturn_frame=Frame(self.window)
+        self.entry_creturn=Entry(self.creturn_frame)
+        self.entry_creturn.bind("<Return>",self.update)
+        self.creturn_frame.label=Label(self.creturn_frame,text="bits par caractères")
+        
         #-Affichage des paramètres actuels-------------------------------------
         self.xyinvert_box.set_value(self.xyinvert) # affichage des paramètres actuels
         self.xdir_box.set_value(self.xdir)
@@ -63,17 +70,20 @@ class App_Settings():# paramètres de l'app
         self.checkG.set_value(self.rgb[1])
         self.checkB.set_value(self.rgb[2])
         self.entry_charbits.insert(0,self.charbits)
+        self.entry_creturn.insert(0,self.creturn)
         
         #-Affichage des widgets------------------------------------------------
         self.entry_charbits.pack(side="left",expand=True, fill="x")
         self.charbits_frame.label.pack(side="right",expand=True, fill="both")
+        self.entry_creturn.pack(side="left",expand=True, fill="x")
+        self.creturn_frame.label.pack(side="right",expand=True, fill="both")
         self.xyinvert_box.pack(expand=True,fill='both')
         self.xdir_box.pack(expand=True,fill='both')
         self.ydir_box.pack(expand=True,fill='both')
         self.rgb_label.pack(expand=True,fill='both')
         self.rgbframe.pack(expand=True,fill='both')
         self.charbits_frame.pack(expand=True,fill="both")
-        
+        self.creturn_frame.pack(expand=True,fill="both")
         #-Protocoles de fermeture----------------------------------------------
         self.window.protocol("WM_DELETE_WINDOW", self.close_window)
         self.shown=True # Permet aux paramètres de se réouvrir uniquement si ils sont fermés
@@ -84,6 +94,7 @@ class App_Settings():# paramètres de l'app
         self.ydir=self.ydir_box.checked()
         self.rgb=(self.checkR.checked(),self.checkG.checked(),self.checkB.checked())
         self.charbits=int(self.entry_charbits.get())
+        self.creturn=self.entry_creturn.get()
     def close_window(self):
         #-Actions lors de la fermeture de la fenètre---------------------------
         self.update() # Dans le cas impossible où la mise à jour des variables ne se serait pas effectuée avant ☻
@@ -144,10 +155,10 @@ class Application(Tk):
     def Encode(self):
         #-Encode du texte dans l'image selectionnée----------------------------
         text=self.text.get(1.0,END)
-        pystega.encode(self.workimage,text,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits)
+        pystega.encode(self.workimage,text,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
     def Decode(self):
         #-décode le texte de l'image selectionnée------------------------------
-        text=pystega.decode(self.workimage,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits)
+        text=pystega.decode(self.workimage,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
         self.text.delete(1.0,END)
         self.text.insert(1.0,text)
 root=Application()

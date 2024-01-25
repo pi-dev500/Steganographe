@@ -43,10 +43,10 @@ Fonctions:
     decode(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8): retourne le texte caché dans l'image si elle en contient
 """)
 
-def encode(funcimage,texte,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8):
+def encode(funcimage,texte,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR"):
     
     bits=[]
-    for letter in "CR"+str(texte)+"CR":
+    for letter in creturn+str(texte)+creturn:
         letter=ord(letter)
         for i in range(charbits):  # Simple technique pour transformer un nombre en série LSB first
             bits.append(letter&0b1)
@@ -101,24 +101,24 @@ def encode(funcimage,texte,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8):
             break
     return funcimage
 
-def check(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8):
+def check(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR"):
     sizex,sizey=funcimage.size
     twofirstletters=[]
     
     if xyorder==0: # same as previous ranges, but only takes the two fist characters of image to check them
         if xdir==0:
-            xrange=range(ceil(2*charbits/rgb.count(1)))
+            xrange=range(ceil(len(creturn)*charbits/rgb.count(1)))
         else:
-            xrange=range(sizex-1,sizex-ceil(2*charbits/rgb.count(1))-1,-1)
+            xrange=range(sizex-1,sizex-ceil(len(creturn)*charbits/rgb.count(1))-1,-1)
         if ydir==0:
             y=0
         else:
             y=sizey-1
     else:
         if ydir==0:
-            xrange=range(ceil(2*charbits/rgb.count(1)))
+            xrange=range(ceil(len(creturn)*charbits/rgb.count(1)))
         else:
-            xrange=range(sizey-1,sizey-ceil(2*charbits/rgb.count(1))-1,-1)
+            xrange=range(sizey-1,sizey-ceil(len(creturn)*charbits/rgb.count(1))-1,-1)
         if xdir==0:
             y=0
         else:
@@ -133,11 +133,15 @@ def check(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8):
             if rgb[i]==1:
                 twofirstletters.append(pix[i]%2)
                 
-    return (chr(sum(val*(2**i) for i, val in enumerate(twofirstletters[:charbits])))=="C") and (chr(sum(val*(2**i) for i, val in enumerate(twofirstletters[charbits:2*charbits])))=="R")
+    state=True
+    for lid in range(len(creturn)):
+        if not chr(sum(val*(2**i) for i, val in enumerate(twofirstletters[charbits*lid:charbits*(lid+1)])))==creturn[lid]:
+               state=False
+    return state
 
-def decode(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8):
+def decode(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR"):
     
-    if not check(funcimage,xyorder,xdir,ydir,rgb,charbits):
+    if not check(funcimage,xyorder,xdir,ydir,rgb,charbits,creturn):
         raise noTextInImageException
     sizex,sizey=funcimage.size
     bits=[]
@@ -173,5 +177,5 @@ def decode(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8):
                     if len(bits)%charbits==0:
                         char_bit_list=(bits[-1*charbits:])
                         text+=chr(sum(val*(2**i) for i, val in enumerate(char_bit_list)))
-                        if text[-2:]=="CR" and len(text)>4:
-                            return text[2:-2]
+                        if text[-1*len(creturn):]==creturn and len(text)>2*len(creturn):
+                            return text[len(creturn):-1*len(creturn)]
