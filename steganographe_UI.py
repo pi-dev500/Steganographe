@@ -60,7 +60,7 @@ class App_Settings():# paramètres de l'app
         self.creturn_frame=Frame(self.window)
         self.entry_creturn=Entry(self.creturn_frame)
         self.entry_creturn.bind("<Return>",self.update)
-        self.creturn_frame.label=Label(self.creturn_frame,text="bits par caractères")
+        self.creturn_frame.label=Label(self.creturn_frame,text="Caractère de retour chariot")
         
         #-Affichage des paramètres actuels-------------------------------------
         self.xyinvert_box.set_value(self.xyinvert) # affichage des paramètres actuels
