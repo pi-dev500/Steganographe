@@ -42,15 +42,24 @@ Fonctions:
     check(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8): vérifie si l'image contient du texte selon les paramètres entrés
     decode(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8): retourne le texte caché dans l'image si elle en contient
 """)
-
-def encode(funcimage,texte,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR"):
-    
+def text_to_binary(text,charbits):
     bits=[]
-    for letter in creturn+str(texte)+creturn:
+    for letter in str(text): # Lettre par lettre
         letter=ord(letter)
         for i in range(charbits):  # Simple technique pour transformer un nombre en série LSB first
             bits.append(letter&0b1)
             letter= letter >> 1 
+    return bits
+def chardecode(sequence):
+    #-Décode un caractère seul encodé au format binaire------------------------
+    bitsvals=[]
+    for i, val in enumerate(sequence):
+        bitsvals.append(val*(2**i)) # multiplie la valeur binaire par son poids
+    int_ord=sum(bitsvals) # somme des valeurs de la liste
+    return chr(int_ord) # convertit le nombre trouvé en string de len 1
+def encode(funcimage,texte,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR"):
+    
+    bits=text_to_binary(creturn+str(texte)+creturn, charbits)
     
     sizex,sizey=funcimage.size
     
@@ -105,7 +114,7 @@ def check(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR")
     sizex,sizey=funcimage.size
     twofirstletters=[]
     
-    if xyorder==0: # same as previous ranges, but only takes the two fist characters of image to check them
+    if xyorder==0: # comme les ranges précédents, mais modifié car seul un nombre limité de bits sera récupéré
         if xdir==0:
             xrange=range(ceil(len(creturn)*charbits/rgb.count(1)))
         else:
@@ -133,9 +142,9 @@ def check(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR")
             if rgb[i]==1:
                 twofirstletters.append(pix[i]%2)
                 
-    state=True
+    state=True # Est par défaut vrai, mais se transforme en faux si un caractère n'est pas validé
     for lid in range(len(creturn)):
-        if not chr(sum(val*(2**i) for i, val in enumerate(twofirstletters[charbits*lid:charbits*(lid+1)])))==creturn[lid]:
+        if not chardecode(twofirstletters[charbits*lid:charbits*(lid+1)])==creturn[lid]:
                state=False
     return state
 
@@ -176,6 +185,6 @@ def decode(funcimage,xyorder=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8,creturn="CR"
                     bits.append(pix[i]%2)
                     if len(bits)%charbits==0:
                         char_bit_list=(bits[-1*charbits:])
-                        text+=chr(sum(val*(2**i) for i, val in enumerate(char_bit_list)))
+                        text+=chardecode(char_bit_list)
                         if text[-1*len(creturn):]==creturn and len(text)>2*len(creturn):
-                            return text[len(creturn):-1*len(creturn)]
+                            return text[len(creturn):-1*len(creturn)] # supprime les caractères de début et de fin pour renvoyer le résultat
