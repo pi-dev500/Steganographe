@@ -5,13 +5,20 @@ Created on Tue Jan 16 21:22:12 2024
 @author: Pi-dev500
 """
 
-from tkinter import filedialog, Tk, Frame, Text, Entry, Button, END, IntVar, Label,Checkbutton
+from tkinter import filedialog, END, IntVar
+from customtkinter import (CTkButton as Button,
+                           CTk as Tk, 
+                           CTkEntry as Entry,
+                           CTkFrame as Frame,
+                           CTkTextbox as Text,
+                           CTkLabel as Label,
+                           CTkCheckBox as Checkbutton)
 import pystega
 class Checkbox(Checkbutton): # J'avais un bug étrange sur l'utilisation des IntVar, ce qui explique cette classe
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.variable = IntVar(self)
-        self.config(variable=self.variable)
+        self.configure(variable=self.variable)
 
     def checked(self):
         return self.variable.get() # récupère la variable interne
@@ -60,7 +67,7 @@ class App_Settings():# paramètres de l'app
         self.creturn_frame=Frame(self.window)
         self.entry_creturn=Entry(self.creturn_frame)
         self.entry_creturn.bind("<Return>",self.update)
-        self.creturn_frame.label=Label(self.creturn_frame,text="Caractère de retour chariot")
+        self.creturn_frame.label=Label(self.creturn_frame,text="Caractères de retour chariot")
         
         #-Affichage des paramètres actuels-------------------------------------
         self.xyinvert_box.set_value(self.xyinvert) # affichage des paramètres actuels
@@ -87,6 +94,7 @@ class App_Settings():# paramètres de l'app
         #-Protocoles de fermeture----------------------------------------------
         self.window.protocol("WM_DELETE_WINDOW", self.close_window)
         self.shown=True # Permet aux paramètres de se réouvrir uniquement si ils sont fermés
+        self.window.mainloop()
     def update(self,default=None):
         #-Mise à jour des variables contenant les paramètres-------------------
         self.xyinvert=self.xyinvert_box.checked()
@@ -107,7 +115,7 @@ class Application(Tk):
         #-Initialisation de l'objet Tk hérité, la fenètre de l'application-----
         Tk.__init__(self)
         self.settings=App_Settings()
-        self.geometry("500x500")
+        self.geometry("800x500")
         self.wm_title("Interface de steganographie")
         self.focus_force() # Prends le focus, sinon, elle apparait en arrière-plan
         
