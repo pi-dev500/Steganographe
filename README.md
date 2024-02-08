@@ -13,6 +13,7 @@ decode(funcimage,xyinvert=0,xdir=0,ydir=0,rgb=(1,1,1),charbits=8) : décode le t
 ## Dépendances:
 Python 3.8+
 PILow
+customtkinter
 
 ## Exemples:
 ### Original:
