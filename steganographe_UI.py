@@ -5,7 +5,7 @@ Created on Tue Jan 16 21:22:12 2024
 @author: Pi-dev500
 """
 
-from tkinter import filedialog, END, IntVar
+from tkinter import filedialog, END, IntVar, DISABLED, NORMAL
 from customtkinter import (CTkButton as Button,
                            CTk as Tk, 
                            CTkEntry as Entry,
@@ -25,7 +25,18 @@ class Checkbox(Checkbutton): # J'avais un bug étrange sur l'utilisation des Int
 
     def set_value(self,value):
         self.variable.set(value) # Coche ou décoche selon la valeur
-
+class Console(Text):
+    def __init__(self,*args, **kwargs):
+        self.buffer=False
+        super().__init__(*args, **kwargs)
+        self.configure(state=DISABLED)
+    def log(self,message):
+        self.configure(state=NORMAL)
+        if self.buffer:
+            self.insert(1.0,"\n")
+        self.insert(1.0,"Message: "+message)
+        self.configure(state=DISABLED)
+        self.buffer=True
 class App_Settings():# paramètres de l'app
     xyinvert=0   ## variables contenant les paramètres
     xdir=0
@@ -127,8 +138,10 @@ class Application(Tk):
         self.fileExplorer.entry.pack(side="left",expand=True,fill="both")
         self.fileExplorer.button.pack(side="right",fill="both")
         
-        self.text=Text(self) # widget pour entrer le texte à coder ou afficher le texte décodé
+        self.textlabel=Label(self,text="Entrée du texte à mettre dans l'image: ")
         
+        self.text=Text(self) # widget pour entrer le texte à coder ou afficher le texte décodé
+        self.console=Console(self)
         #-Barre de boutons d'action--------------------------------------------
         self.actions=Frame(self)
         self.actions.encode_button=Button(self.actions,text="Encoder",command=self.Encode)
@@ -142,32 +155,71 @@ class Application(Tk):
         self.actions.settings_button.pack(side='right',expand=True,fill='both')
         #-Affichage------------------------------------------------------------
         self.fileExplorer.pack(fill="both")
+        self.textlabel.pack()
         self.text.pack(expand=True,fill="both")
+        self.console.pack(fill="both")
+        self.console.configure(height=2)
         self.actions.pack(fill="both")
+        
         
     def Browse(self):
         #-Explorateur pour choisir une image-----------------------------------
-        filename= filedialog.askopenfilename(title="Select an Image",filetypes=(("Binary images","*.bmp"),("All files","*.*")))
+        try:
+            filename= filedialog.askopenfilename(title="Select an Image",filetypes=(("Binary images","*.bmp"),("All files","*.*")))
+        except Exception as error:
+            if hasattr(error, 'message'):
+                self.console.log(error.message)
         if filename!="":
             self.fileExplorer.entry.delete(0,END)
             self.fileExplorer.entry.insert(0,filename)
             self.setIMGfile()
     def setIMGfile(self,a=None):
         #-Import de l'image choisie et stockage dans la mémoire vive-----------
-        self.workimage=pystega.Img(self.fileExplorer.entry.get())
+        try:
+            self.workimage=pystega.Img(self.fileExplorer.entry.get())
+            self.console.log("Image selectionnée: "+ self.fileExplorer.entry.get())
+        except Exception as error:
+            if hasattr(error, 'message'):
+                self.console.log(error.message)
     def SaveAS(self):
         #-Ouvre un explorateur pour enregistrer l'image------------------------
-        filename=filedialog.asksaveasfilename(title="Save Image as",filetypes=(("Binary images","*.bmp"),("All files","*.*")))
-        self.workimage.save(filename)
+        if not self.workimage:
+                self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
+        else:
+            filename=filedialog.asksaveasfilename(title="Save Image as",filetypes=(("Binary images","*.bmp"),("All files","*.*")))
+            try:
+                self.workimage.save(filename)
+                self.console.log("Image sauvegardée sous: "+filename)
+            except Exception as error:
+                if filename=="":
+                    self.console.log("Pas de fichier selectionné")
+                elif hasattr(error, 'message'):
+                    self.console.log(error.message)
         print("Image saved as:",filename)
     def Encode(self):
         #-Encode du texte dans l'image selectionnée----------------------------
         text=self.text.get(1.0,END)
-        pystega.encode(self.workimage,text,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
+        if not self.workimage:
+                self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
+        try:
+            pystega.encode(self.workimage,text,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
+            self.console.log("Succès !")
+        except Exception as error:
+            if hasattr(error, 'message'):
+                self.console.log(error.message)
     def Decode(self):
         #-décode le texte de l'image selectionnée------------------------------
-        text=pystega.decode(self.workimage,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
-        self.text.delete(1.0,END)
-        self.text.insert(1.0,text)
+        try:
+            text=pystega.decode(self.workimage,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
+            self.text.delete(1.0,END)
+            self.text.insert(1.0,text)
+            self.textlabel.configure(text="Texte décodé à partir de l'image / Entrez un nouveau texte à encoder: ")
+            self.console.log("Succès !")
+        except Exception as error:
+            if not self.workimage:
+                self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
+            if hasattr(error, 'message'):
+                self.console.log(error.message)
+        
 root=Application()
 root.mainloop()
