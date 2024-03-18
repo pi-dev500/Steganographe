@@ -1,4 +1,4 @@
-from tkinter import IntVar, DISABLED, NORMAL, filedialog 
+from tkinter import IntVar, DISABLED, NORMAL, filedialog, END, Label as tkLabel
 from customtkinter import (CTkButton as Button,
                            CTk as Tk, 
                            CTkEntry as Entry,
@@ -7,6 +7,7 @@ from customtkinter import (CTkButton as Button,
                            CTkLabel as Label,
                            CTkCheckBox as Checkbutton,
                            CTkTabview as Tabview)
+from PIL import Image, ImageTk
 # todo: copy old gui and add the possibility to insert json as editable table 
 import pystega
 class Checkbox(Checkbutton): # J'avais un bug étrange sur l'utilisation des IntVar, ce qui explique cette classe
@@ -122,7 +123,7 @@ class Application(Tk):
         Tk.__init__(self)
         self.settings=App_Settings()
         self.geometry("800x500")
-        self.wm_title("Interface de steganographie")
+        self.wm_title("Interface de steganographie Médicale")
         self.focus_force() # Prends le focus, sinon, elle apparait en arrière-plan
         
         #-Partie de selection d'image------------------------------------------
@@ -132,12 +133,18 @@ class Application(Tk):
         self.fileExplorer.button=Button(self.fileExplorer,command=self.Browse,text="Explorer...")
         self.fileExplorer.entry.pack(side="left",expand=True,fill="both")
         self.fileExplorer.button.pack(side="right",fill="both")
-        self.app_tabs=Tabview(self)
-        self.app_tabs.add("Notes")
+        self.ATF = Frame(self)
+        self.app_tabs=Tabview(self.ATF)
         self.app_tabs.add("Infos Médicales")
-        self.textlabel=Label(self,text="Entrée du texte à mettre dans l'image: ")
-        
-        self.text=Text(self) # widget pour entrer le texte à coder ou afficher le texte décodé
+        self.app_tabs.add("Notes")
+        self.app_tabs.set("Infos Médicales")
+        #-Onglets--------------------------------------------------------------
+        self.textlabel=Label(self.app_tabs.tab("Notes"),text="Entrée de notes médicales: ")
+        self.app_tabs.pack()
+        self.text=Text(self.app_tabs.tab("Notes")) # widget pour entrer le texte à coder ou afficher le texte décodé
+        #-Partie formelle (Infos Médicales)------------------------------------
+        self.M_UPlabel=tkLabel(self.app_tabs.tab("Infos Médicales"),image=None)
+        #-Console--------------------------------------------------------------
         self.console=Console(self)
         #-Barre de boutons d'action--------------------------------------------
         self.actions=Frame(self)
@@ -151,9 +158,15 @@ class Application(Tk):
         self.actions.save_button.pack(side="left",expand=True,fill="both")
         self.actions.settings_button.pack(side='right',expand=True,fill='both')
         #-Affichage------------------------------------------------------------
-        self.fileExplorer.pack(fill="both")
+        # Affichage onglet "Notes"
         self.textlabel.pack()
         self.text.pack(expand=True,fill="both")
+        # Affichage onglet "Infos Médicales"
+        self.M_UPlabel.pack(side="left")
+        # Affichage final
+        self.fileExplorer.pack(fill="both")
+        self.ATF.pack(expand=True, fill="both")
+        self.app_tabs.pack(expand=True, fill="both")
         self.console.pack(fill="both")
         self.console.configure(height=2)
         self.actions.pack(fill="both")
@@ -175,6 +188,10 @@ class Application(Tk):
         try:
             self.workimage=pystega.Img(self.fileExplorer.entry.get())
             self.console.log("Image selectionnée: "+ self.fileExplorer.entry.get())
+            tkimg=ImageTk.PhotoImage(workimage)
+            self.M_UPlabel.destroy()
+            self.M_UPlabel=tkLabel(self.app_tabs.tab("Infos Médicales"),image=tkimg)
+            self.M_UPlabel.pack(side="left")
         except Exception as error:
             if hasattr(error, 'message'):
                 self.console.log(error.message)
