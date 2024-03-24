@@ -6,7 +6,8 @@ from customtkinter import (CTkButton as Button,
                            CTkTextbox as Text,
                            CTkLabel as Label,
                            CTkCheckBox as Checkbutton,
-                           CTkTabview as Tabview)
+                           CTkTabview as Tabview,
+                           CTkImage)
 from PIL import Image, ImageTk
 # todo: copy old gui and add the possibility to insert json as editable table 
 import pystega
@@ -143,7 +144,9 @@ class Application(Tk):
         self.app_tabs.pack()
         self.text=Text(self.app_tabs.tab("Notes")) # widget pour entrer le texte à coder ou afficher le texte décodé
         #-Partie formelle (Infos Médicales)------------------------------------
-        self.M_UPlabel=tkLabel(self.app_tabs.tab("Infos Médicales"),image=None)
+        defimage=Image.open("images/default.png")
+        self.M_UPimage=CTkImage(light_image=defimage,dark_image=defimage,size=(50,defimage.height/defimage.width*50))
+        self.M_UPlabel=Label(self.app_tabs.tab("Infos Médicales"),image=self.M_UPimage,text="")#
         #-Console--------------------------------------------------------------
         self.console=Console(self)
         #-Barre de boutons d'action--------------------------------------------
@@ -158,6 +161,7 @@ class Application(Tk):
         self.actions.save_button.pack(side="left",expand=True,fill="both")
         self.actions.settings_button.pack(side='right',expand=True,fill='both')
         #-Affichage------------------------------------------------------------
+        
         # Affichage onglet "Notes"
         self.textlabel.pack()
         self.text.pack(expand=True,fill="both")
@@ -188,10 +192,8 @@ class Application(Tk):
         try:
             self.workimage=pystega.Img(self.fileExplorer.entry.get())
             self.console.log("Image selectionnée: "+ self.fileExplorer.entry.get())
-            tkimg=ImageTk.PhotoImage(workimage)
-            self.M_UPlabel.destroy()
-            self.M_UPlabel=tkLabel(self.app_tabs.tab("Infos Médicales"),image=tkimg)
-            self.M_UPlabel.pack(side="left")
+            self.M_UPimage=CTkImage(light_image=self.workimage,dark_image=self.workimage,size=(50,self.workimage.height/self.workimage.width*50))
+            self.M_UPlabel.configure(image=self.M_UPimage)
         except Exception as error:
             if hasattr(error, 'message'):
                 self.console.log(error.message)
