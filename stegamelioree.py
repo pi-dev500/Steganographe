@@ -145,7 +145,7 @@ class Application(Tk):
         self.text=Text(self.app_tabs.tab("Notes")) # widget pour entrer le texte à coder ou afficher le texte décodé
         #-Partie formelle (Infos Médicales)------------------------------------
         defimage=Image.open("images/default.png")
-        self.M_UPimage=CTkImage(light_image=defimage,dark_image=defimage,size=(50,defimage.height/defimage.width*50))
+        self.M_UPimage=CTkImage(light_image=defimage,dark_image=defimage,size=(defimage.width/defimage.height*70,70)) # images customtkinter différentes
         self.M_UPlabel=Label(self.app_tabs.tab("Infos Médicales"),image=self.M_UPimage,text="")#
         #-Console--------------------------------------------------------------
         self.console=Console(self)
@@ -192,7 +192,7 @@ class Application(Tk):
         try:
             self.workimage=pystega.Img(self.fileExplorer.entry.get())
             self.console.log("Image selectionnée: "+ self.fileExplorer.entry.get())
-            self.M_UPimage=CTkImage(light_image=self.workimage,dark_image=self.workimage,size=(50,self.workimage.height/self.workimage.width*50))
+            self.M_UPimage=CTkImage(light_image=self.workimage,dark_image=self.workimage,size=(self.workimage.width/self.workimage.height*70,70))
             self.M_UPlabel.configure(image=self.M_UPimage)
         except Exception as error:
             if hasattr(error, 'message'):
