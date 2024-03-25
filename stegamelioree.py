@@ -8,7 +8,9 @@ from customtkinter import (CTkButton as Button,
                            CTkCheckBox as Checkbutton,
                            CTkTabview as Tabview,
                            CTkImage,
-                           CTkScrollableFrame)
+                           CTkScrollableFrame,
+                           CTkInputDialog
+                           )
 from PIL import Image, ImageTk
 import json
 # todo: add the possibility to insert json as editable table 
@@ -123,26 +125,34 @@ class App_Settings():# paramètres de l'app
 
 class Table(CTkScrollableFrame):
     data=dict()
-    def __init__(self,masterw,dictionary={"Nom": "","Prénom":"","Date de Naissance dd/mm/aa":"","Poids":"","Taille":""},*args, **kwargs):
+    def __init__(self,masterw,dictionary={"Nom": "","Prénom":"","Date de Naissance dd/mm/aa":"","Poids":"","Taille":"","Sexe":""},*args, **kwargs):
         super().__init__(masterw,*args, **kwargs)
+        self.add_btn=Button(self,text="Ajouter un nouveau champ...", command=self.new)
         for name, value in dictionary.items():
             self.data[name]=self.create_row(name,value)
-    
+        self.add_btn.pack(pady=5)
     def create_row(self,name,value):
+        self.add_btn.pack_forget() # éviter que le nouveau champ se retrouve après le bouton
         rframe=Frame(self)
         rlabel=Label(rframe,text=name)
         rentry=Entry(rframe)
         rentry.insert(0,value)
         rlabel.pack(side="left")
         rentry.pack(side="right")
-        rframe.pack(fill="both")
+        rframe.pack(fill="both",pady=5) # le padding améliore l'apparence
+        self.add_btn.pack(pady=5)
         return {"frame": rframe, "label": rlabel, "entry": rentry}
     def get_data(self):
         result=dict()
         for name,value in self.data.items():
             result[name]=value["entry"].get()
+        print(result)
         return result
-    
+    def new(self):
+        dialog=CTkInputDialog(text="Veuillez entrer le nom du nouveau champ:",title="Nouveau champ pour medistega")
+        name=dialog.get_input()
+        if name:
+            self.data[name]=self.create_row(name,"")
 class Application(Tk):
     workimage=None
     def __init__(self):
@@ -171,10 +181,11 @@ class Application(Tk):
         self.text=Text(self.app_tabs.tab("Notes")) # widget pour entrer le texte à coder ou afficher le texte décodé
         #-Partie formelle (Infos Médicales)------------------------------------
         defimage=Image.open("images/default.png")
+        self.M_UPFrame=Frame(self.app_tabs.tab("Infos Médicales"))
         self.M_UPimage=CTkImage(light_image=defimage,dark_image=defimage,size=(defimage.width/defimage.height*70,70)) # images customtkinter différentes
-        self.M_UPlabel=Label(self.app_tabs.tab("Infos Médicales"),image=self.M_UPimage,text="")#
-        self.M_Dbutton=Button(self.app_tabs.tab("Infos Médicales"),text="Récupérer les champs par défaut", command=self.medical_rec)
-        self.MTable=Table(self.app_tabs.tab("Infos Médicales"),dictionary={"Nom": "","Prénom":"","Date de Naissance dd/mm/aa":"","Poids":"","Taille":""})
+        self.M_UPlabel=Label(self.M_UPFrame,image=self.M_UPimage,text="")#
+        self.M_Dbutton=Button(self.M_UPFrame,text="Récupérer les champs par défaut", command=self.medical_rec)
+        
         #-Console--------------------------------------------------------------
         self.console=Console(self)
         #-Barre de boutons d'action--------------------------------------------
@@ -194,9 +205,9 @@ class Application(Tk):
         self.textlabel.pack()
         self.text.pack(expand=True,fill="both")
         # Affichage onglet "Infos Médicales"
+        self.M_UPFrame.pack(side="top", fill="both")
         self.M_UPlabel.pack(side="left")
         self.M_Dbutton.pack(side="right")
-        self.MTable.pack(side="bottom",expand=True,fill="both")
         # Affichage final
         self.fileExplorer.pack(fill="both")
         self.ATF.pack(expand=True, fill="both")
@@ -207,7 +218,10 @@ class Application(Tk):
         
         
     def medical_rec(self):
-        pass
+        try:
+            self.MTable.get_data()
+        except:
+            pass
     def Browse(self):
         #-Explorateur pour choisir une image-----------------------------------
         try:
@@ -226,6 +240,12 @@ class Application(Tk):
             self.console.log("Image selectionnée: "+ self.fileExplorer.entry.get())
             self.M_UPimage=CTkImage(light_image=self.workimage,dark_image=self.workimage,size=(self.workimage.width/self.workimage.height*70,70))
             self.M_UPlabel.configure(image=self.M_UPimage)
+            try:
+                self.MTable.destroy()
+            except:
+                pass
+            self.MTable=Table(self.app_tabs.tab("Infos Médicales"))
+            self.MTable.pack(side="bottom",expand=True,fill="both")
         except Exception as error:
             if hasattr(error, 'message'):
                 self.console.log(error.message)
@@ -248,6 +268,7 @@ class Application(Tk):
         #-Encode du texte dans l'image selectionnée----------------------------
         jdict=dict()
         jdict["notes"]=self.text.get(0.0,END)
+        jdict["donnees"]=self.MTable.get_data()
         text=json.dumps(jdict)
         if not self.workimage:
                 self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
@@ -264,6 +285,13 @@ class Application(Tk):
             jdict=json.loads(text)
             self.text.delete(0.0,END)
             self.text.insert(0.0,jdict["notes"][:-1])#Mettre le texte sans le \n exédent
+            try:
+                self.MTable.destroy()
+            except:
+                pass
+            j2data=jdict["donnees"]
+            self.MTable=Table(self.app_tabs.tab("Infos Médicales"),j2data)
+            self.MTable.pack(side="bottom",expand=True,fill="both")
             self.textlabel.configure(text="Notes éditables décodées à partir de l'image: ")
             self.console.log("Succès !")
         except Exception as error:
