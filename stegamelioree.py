@@ -7,10 +7,13 @@ from customtkinter import (CTkButton as Button,
                            CTkLabel as Label,
                            CTkCheckBox as Checkbutton,
                            CTkTabview as Tabview,
-                           CTkImage)
+                           CTkImage,
+                           CTkScrollableFrame)
 from PIL import Image, ImageTk
-# todo: copy old gui and add the possibility to insert json as editable table 
+import json
+# todo: add the possibility to insert json as editable table 
 import pystega
+
 class Checkbox(Checkbutton): # J'avais un bug étrange sur l'utilisation des IntVar, ce qui explique cette classe
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -117,6 +120,29 @@ class App_Settings():# paramètres de l'app
         self.window.destroy()
         self.shown=False # Permet aux paramètres de se réouvrir uniquement si ils sont fermés
         
+
+class Table(CTkScrollableFrame):
+    data=dict()
+    def __init__(self,masterw,dictionary={"Nom": "","Prénom":"","Date de Naissance dd/mm/aa":"","Poids":"","Taille":""},*args, **kwargs):
+        super().__init__(masterw,*args, **kwargs)
+        for name, value in dictionary.items():
+            self.data[name]=self.create_row(name,value)
+    
+    def create_row(self,name,value):
+        rframe=Frame(self)
+        rlabel=Label(rframe,text=name)
+        rentry=Entry(rframe)
+        rentry.insert(0,value)
+        rlabel.pack(side="left")
+        rentry.pack(side="right")
+        rframe.pack(fill="both")
+        return {"frame": rframe, "label": rlabel, "entry": rentry}
+    def get_data(self):
+        result=dict()
+        for name,value in self.data.items():
+            result[name]=value["entry"].get()
+        return result
+    
 class Application(Tk):
     workimage=None
     def __init__(self):
@@ -147,6 +173,8 @@ class Application(Tk):
         defimage=Image.open("images/default.png")
         self.M_UPimage=CTkImage(light_image=defimage,dark_image=defimage,size=(defimage.width/defimage.height*70,70)) # images customtkinter différentes
         self.M_UPlabel=Label(self.app_tabs.tab("Infos Médicales"),image=self.M_UPimage,text="")#
+        self.M_Dbutton=Button(self.app_tabs.tab("Infos Médicales"),text="Récupérer les champs par défaut", command=self.medical_rec)
+        self.MTable=Table(self.app_tabs.tab("Infos Médicales"),dictionary={"Nom": "","Prénom":"","Date de Naissance dd/mm/aa":"","Poids":"","Taille":""})
         #-Console--------------------------------------------------------------
         self.console=Console(self)
         #-Barre de boutons d'action--------------------------------------------
@@ -167,6 +195,8 @@ class Application(Tk):
         self.text.pack(expand=True,fill="both")
         # Affichage onglet "Infos Médicales"
         self.M_UPlabel.pack(side="left")
+        self.M_Dbutton.pack(side="right")
+        self.MTable.pack(side="bottom",expand=True,fill="both")
         # Affichage final
         self.fileExplorer.pack(fill="both")
         self.ATF.pack(expand=True, fill="both")
@@ -176,6 +206,8 @@ class Application(Tk):
         self.actions.pack(fill="both")
         
         
+    def medical_rec(self):
+        pass
     def Browse(self):
         #-Explorateur pour choisir une image-----------------------------------
         try:
@@ -214,7 +246,9 @@ class Application(Tk):
         print("Image saved as:",filename)
     def Encode(self):
         #-Encode du texte dans l'image selectionnée----------------------------
-        text=self.text.get(1.0,END)
+        jdict=dict()
+        jdict["notes"]=self.text.get(0.0,END)
+        text=json.dumps(jdict)
         if not self.workimage:
                 self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
         try:
@@ -227,9 +261,10 @@ class Application(Tk):
         #-décode le texte de l'image selectionnée------------------------------
         try:
             text=pystega.decode(self.workimage,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
-            self.text.delete(1.0,END)
-            self.text.insert(1.0,text)
-            self.textlabel.configure(text="Texte décodé à partir de l'image / Entrez un nouveau texte à encoder: ")
+            jdict=json.loads(text)
+            self.text.delete(0.0,END)
+            self.text.insert(0.0,jdict["notes"][:-1])#Mettre le texte sans le \n exédent
+            self.textlabel.configure(text="Notes éditables décodées à partir de l'image: ")
             self.console.log("Succès !")
         except Exception as error:
             if not self.workimage:
