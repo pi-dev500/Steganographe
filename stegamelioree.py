@@ -1,4 +1,4 @@
-from tkinter import IntVar, DISABLED, NORMAL, filedialog, END, Label as tkLabel
+from tkinter import IntVar, DISABLED, NORMAL, filedialog, END
 from customtkinter import (CTkButton as Button,
                            CTk as Tk, 
                            CTkEntry as Entry,
@@ -11,9 +11,8 @@ from customtkinter import (CTkButton as Button,
                            CTkScrollableFrame,
                            CTkInputDialog
                            )
-from PIL import Image, ImageTk
+from PIL import Image
 import json
-# todo: add the possibility to insert json as editable table 
 import pystega
 
 class Checkbox(Checkbutton): # J'avais un bug étrange sur l'utilisation des IntVar, ce qui explique cette classe
@@ -125,7 +124,7 @@ class App_Settings():# paramètres de l'app
 
 class Table(CTkScrollableFrame):
     data=dict()
-    def __init__(self,masterw,dictionary={"Nom": "","Prénom":"","Date de Naissance dd/mm/aa":"","Poids":"","Taille":"","Sexe":""},*args, **kwargs):
+    def __init__(self,masterw,dictionary={"Nom": "","Prénom":"","Date de Naissance dd/mm/aaaa":"","Poids (kg)":"","Taille (m)":"","Sexe (M/F/I)":""},*args, **kwargs):
         super().__init__(masterw,*args, **kwargs)
         self.add_btn=Button(self,text="Ajouter un nouveau champ...", command=self.new)
         for name, value in dictionary.items():
@@ -207,7 +206,7 @@ class Application(Tk):
         # Affichage onglet "Infos Médicales"
         self.M_UPFrame.pack(side="top", fill="both")
         self.M_UPlabel.pack(side="left")
-        self.M_Dbutton.pack(side="right")
+        # self.M_Dbutton.pack(side="right") # Je ne sais pas si c'est trés utile.
         # Affichage final
         self.fileExplorer.pack(fill="both")
         self.ATF.pack(expand=True, fill="both")
@@ -241,6 +240,7 @@ class Application(Tk):
             self.M_UPimage=CTkImage(light_image=self.workimage,dark_image=self.workimage,size=(self.workimage.width/self.workimage.height*70,70))
             self.M_UPlabel.configure(image=self.M_UPimage)
             try:
+                self.MTable.pack_forget()
                 self.MTable.destroy()
             except:
                 pass
@@ -286,6 +286,7 @@ class Application(Tk):
             self.text.delete(0.0,END)
             self.text.insert(0.0,jdict["notes"][:-1])#Mettre le texte sans le \n exédent
             try:
+                self.MTable.pack_forget()
                 self.MTable.destroy()
             except:
                 pass
