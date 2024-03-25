@@ -266,17 +266,17 @@ class Application(Tk):
         print("Image saved as:",filename)
     def Encode(self):
         #-Encode du texte dans l'image selectionnée----------------------------
-        jdict=dict()
-        jdict["notes"]=self.text.get(0.0,END)
-        jdict["donnees"]=self.MTable.get_data()
-        text=json.dumps(jdict)
-        if not self.workimage:
-                self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
         try:
+            jdict=dict()
+            jdict["notes"]=self.text.get(0.0,END)
+            jdict["donnees"]=self.MTable.get_data()
+            text=json.dumps(jdict)
             pystega.encode(self.workimage,text,self.settings.xyinvert,self.settings.xdir,self.settings.ydir,self.settings.rgb,self.settings.charbits,self.settings.creturn)
             self.console.log("Succès !")
         except Exception as error:
-            if hasattr(error, 'message'):
+            if not self.workimage:
+                self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
+            elif hasattr(error, 'message'):
                 self.console.log(error.message)
     def Decode(self):
         #-décode le texte de l'image selectionnée------------------------------
@@ -297,7 +297,7 @@ class Application(Tk):
         except Exception as error:
             if not self.workimage:
                 self.console.log("Pas d'image dans la mémoire. Veuillez en selectionner une d'abord.")
-            if hasattr(error, 'message'):
+            elif hasattr(error, 'message'):
                 self.console.log(error.message)
         
 root=Application()
